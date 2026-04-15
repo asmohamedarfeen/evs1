@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Botanica — Plant Health Adviser</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0d1a0f;
+    --surface: #111f13;
+    --card: #152118;
+    --border: #1e3322;
+    --accent: #4caf72;
+    --accent2: #a8d5a2;
+    --gold: #c9a84c;
+    --text: #e8f0e9;
+    --muted: #6b8f71;
+    --danger: #e05252;
+    --warn: #d4a843;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 20% 10%, rgba(76,175,114,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 80%, rgba(168,213,162,0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  header {
+    position: relative; z-index: 1;
+    text-align: center;
+    padding: 52px 20px 32px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-leaf {
+    font-size: 2.4rem;
+    display: inline-block;
+    animation: sway 4s ease-in-out infinite;
+    margin-bottom: 8px;
+  }
+  @keyframes sway {
+    0%, 100% { transform: rotate(-5deg); }
+    50% { transform: rotate(5deg); }
+  }
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+  header h1 span { color: var(--accent); }
+  header p {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 0.95rem;
+    font-weight: 300;
+    letter-spacing: 0.5px;
+  }
+  .container {
+    position: relative; z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+  }
+  .api-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 28px;
+  }
+  .api-section label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .api-row { display: flex; gap: 10px; }
+  .api-row input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .api-row input:focus { border-color: var(--accent); }
+  .api-row input::placeholder { color: var(--muted); }
+  .btn-save {
+    background: var(--accent);
+    color: #0d1a0f;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 22px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+  }
+  .btn-save:hover { opacity: 0.85; }
+  .api-hint { margin-top: 10px; font-size: 0.78rem; color: var(--muted); }
+  .api-hint a { color: var(--accent2); }
+  .upload-zone {
+    position: relative;
+    background: var(--card);
+    border: 2px dashed var(--border);
+    border-radius: 20px;
+    padding: 48px 28px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.3s, background 0.3s;
+    margin-bottom: 28px;
+    overflow: hidden;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(76,175,114,0.04);
+  }
+  .upload-zone input[type=file] {
+    position: absolute; inset: 0;
+    opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .upload-icon { font-size: 3rem; margin-bottom: 14px; opacity: 0.7; }
+  .upload-zone h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 400;
+    margin-bottom: 6px;
+  }
+  .upload-zone p { font-size: 0.85rem; color: var(--muted); }
+  .preview-wrap {
+    display: none;
+    position: relative;
+    margin-bottom: 28px;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    max-height: 420px;
+  }
+  .preview-wrap img {
+    width: 100%; display: block; object-fit: cover; max-height: 420px;
+  }
+  .preview-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(13,26,15,0.8) 0%, transparent 50%);
+    display: flex; align-items: flex-end; padding: 20px;
+    justify-content: space-between;
+  }
+  .preview-overlay span { font-size: 0.85rem; color: var(--accent2); }
+  .btn-change {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: var(--text);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-change:hover { background: rgba(255,255,255,0.18); }
+  .btn-analyse {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent) 0%, #38a85e 100%);
+    color: #0a150b;
+    border: none;
+    border-radius: 14px;
+    padding: 18px 24px;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+    box-shadow: 0 8px 32px rgba(76,175,114,0.25);
+    margin-bottom: 36px;
+  }
+  .btn-analyse:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(76,175,114,0.35);
+  }
+  .btn-analyse:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-analyse .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(0,0,0,0.2);
+    border-top-color: #0a150b;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  .btn-analyse.loading .spinner { display: block; }
+  .btn-analyse.loading .btn-text { opacity: 0.6; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #results { display: none; }
+  .result-header {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 24px; flex-wrap: wrap;
+  }
+  .plant-name-badge {
+    background: linear-gradient(135deg, var(--accent) 20%, #38a85e);
+    color: #0a150b;
+    padding: 6px 18px;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+  .health-badge {
+    padding: 6px 18px;
+    border-radius: 100px;
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+  .health-good { background: rgba(76,175,114,0.15); color: var(--accent); border: 1px solid rgba(76,175,114,0.3); }
+  .health-warning { background: rgba(212,168,67,0.15); color: var(--warn); border: 1px solid rgba(212,168,67,0.3); }
+  .health-poor { background: rgba(224,82,82,0.15); color: var(--danger); border: 1px solid rgba(224,82,82,0.3); }
+  .cards-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  @media (max-width: 620px) { .cards-grid { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card.full { grid-column: 1 / -1; }
+  .card.disease { border-color: rgba(224,82,82,0.3); background: rgba(224,82,82,0.04); }
+  .card.cure { border-color: rgba(201,168,76,0.3); background: rgba(201,168,76,0.04); }
+  .card-icon { font-size: 1.6rem; margin-bottom: 10px; }
+  .card-title {
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .card-body {
+    font-size: 0.92rem;
+    line-height: 1.7;
+    color: var(--text);
+  }
+  .card-body ul { padding-left: 18px; }
+  .card-body li { margin-bottom: 6px; }
+  .card-body strong { color: var(--accent2); }
+  .error-box {
+    background: rgba(224,82,82,0.08);
+    border: 1px solid rgba(224,82,82,0.3);
+    border-radius: 12px;
+    padding: 16px 20px;
+    color: #e88;
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    display: none;
+  }
+  .divider { height: 1px; background: var(--border); margin: 32px 0; }
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.78rem;
+    padding: 20px;
+    border-top: 1px solid var(--border);
+    position: relative; z-index: 1;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-leaf">🌿</div>
+  <h1>Bota<span>nica</span></h1>
+  <p>AI-powered plant health diagnosis & care advisor</p>
+</header>
+
+<div class="container">
+
+  <div class="api-section">
+    <label>🔑 Gemini API Key</label>
+    <div class="api-row">
+      <input type="password" id="apiKey" placeholder="Paste your Gemini API key here…" />
+      <button class="btn-save" onclick="saveKey()">Save</button>
+    </div>
+    <p class="api-hint">
+      Get a free key at <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>.
+      Your key is stored only in this browser session.
+    </p>
+  </div>
+
+  <div class="upload-zone" id="uploadZone">
+    <input type="file" id="fileInput" accept="image/*" onchange="handleFile(event)" />
+    <div class="upload-icon">📷</div>
+    <h3>Upload a photo of your plant</h3>
+    <p>Drag & drop or click to browse · JPG, PNG, WEBP</p>
+  </div>
+
+  <div class="preview-wrap" id="previewWrap">
+    <img id="previewImg" src="" alt="Plant preview" />
+    <div class="preview-overlay">
+      <span id="fileName">plant.jpg</span>
+      <button class="btn-change" onclick="resetImage()">Change photo</button>
+    </div>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <button class="btn-analyse" id="analyseBtn" onclick="analyse()" disabled>
+    <div class="spinner"></div>
+    <span class="btn-text">🔬 Analyse My Plant</span>
+  </button>
+
+  <div id="results"></div>
+
+</div>
+
+<footer>Botanica uses Google Gemini Vision AI · Results are advisory — consult a horticulturist for serious concerns</footer>
+
+<script>
+  let imageBase64 = null;
+  let imageType = 'image/jpeg';
+
+  const zone = document.getElementById('uploadZone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file) processFile(file);
+  });
+
+  function handleFile(e) {
+    const file = e.target.files[0];
+    if (file) processFile(file);
+  }
+
+  function processFile(file) {
+    imageType = file.type || 'image/jpeg';
+    document.getElementById('fileName').textContent = file.name;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const result = ev.target.result;
+      imageBase64 = result.split(',')[1];
+      document.getElementById('previewImg').src = result;
+      document.getElementById('uploadZone').style.display = 'none';
+      document.getElementById('previewWrap').style.display = 'block';
+      document.getElementById('analyseBtn').disabled = false;
+      document.getElementById('results').style.display = 'none';
+      document.getElementById('results').innerHTML = '';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function resetImage() {
+    imageBase64 = null;
+    document.getElementById('uploadZone').style.display = 'block';
+    document.getElementById('previewWrap').style.display = 'none';
+    document.getElementById('analyseBtn').disabled = true;
+    document.getElementById('results').style.display = 'none';
+    document.getElementById('results').innerHTML = '';
+    document.getElementById('fileInput').value = '';
+    hideError();
+  }
+
+  function saveKey() {
+    const key = document.getElementById('apiKey').value.trim();
+    if (key) { sessionStorage.setItem('gemini_key', key); showToast('API key saved ✓'); }
+  }
+
+  function getKey() {
+    return document.getElementById('apiKey').value.trim() || sessionStorage.getItem('gemini_key') || '';
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('errorBox');
+    el.textContent = msg; el.style.display = 'block';
+  }
+  function hideError() { document.getElementById('errorBox').style.display = 'none'; }
+
+  function showToast(msg) {
+    const t = document.createElement('div');
+    t.textContent = msg;
+    Object.assign(t.style, {
+      position:'fixed', bottom:'24px', right:'24px', background:'var(--accent)',
+      color:'#0a150b', padding:'10px 20px', borderRadius:'10px',
+      fontFamily:"'DM Sans',sans-serif", fontSize:'0.88rem',
+      zIndex:'9999', fontWeight:'500'
+    });
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2500);
+  }
+
+  async function analyse() {
+    hideError();
+    const key = getKey();
+    if (!key) { showError('Please enter your Gemini API key first.'); return; }
+    if (!imageBase64) { showError('Please upload a plant photo first.'); return; }
+
+    const btn = document.getElementById('analyseBtn');
+    btn.classList.add('loading');
+    btn.disabled = true;
+
+    const prompt = `You are an expert botanist and plant health specialist. Carefully analyze this plant image and provide a detailed report in the following JSON format exactly (no markdown, no extra text, pure JSON only):
+
+{
+  "plant_name": "Common name (Scientific name)",
+  "health_status": "Good",
+  "health_summary": "One-sentence overall health assessment",
+  "observations": ["observation 1", "observation 2", "observation 3"],
+  "care_tips": [
+    {"title": "Watering", "tip": "Specific watering advice"},
+    {"title": "Sunlight", "tip": "Specific light advice"},
+    {"title": "Soil & Fertilizer", "tip": "Specific soil advice"},
+    {"title": "Pruning & Maintenance", "tip": "Specific pruning advice"}
+  ],
+  "diseases_or_problems": [
+    {
+      "name": "Problem name",
+      "symptoms": "What you see in the image",
+      "home_cure": "Step-by-step home remedy using household items like neem oil, baking soda, dish soap, cinnamon, hydrogen peroxide, garlic spray, etc."
+    }
+  ],
+  "fun_fact": "An interesting fact about this plant"
+}
+
+health_status must be exactly one of: "Good", "Fair", or "Poor".
+If no diseases are detected, set diseases_or_problems to [].
+Respond ONLY with valid JSON, nothing else.`;
+
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [
+                { text: prompt },
+                { inline_data: { mime_type: imageType, data: imageBase64 } }
+              ]
+            }],
+            generationConfig: { temperature: 0.4, maxOutputTokens: 1500 }
+          })
+        }
+      );
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error?.message || 'API error ' + res.status);
+      }
+
+      const data = await res.json();
+      const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const clean = raw.replace(/```json|```/g, '').trim();
+      const report = JSON.parse(clean);
+      renderResults(report);
+
+    } catch (e) {
+      showError('Error: ' + (e.message.includes('JSON') ? 'Could not parse AI response. Please try again.' : e.message));
+    } finally {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    }
+  }
+
+  function renderResults(r) {
+    const healthClass = r.health_status === 'Good' ? 'health-good' : r.health_status === 'Fair' ? 'health-warning' : 'health-poor';
+    const healthIcon = r.health_status === 'Good' ? '🌱' : r.health_status === 'Fair' ? '⚠️' : '🚨';
+
+    const obsList = (r.observations || []).map(o => `<li>${o}</li>`).join('');
+
+    const careTips = (r.care_tips || []).map(c => `
+      <div class="card">
+        <div class="card-title">${c.title}</div>
+        <div class="card-body">${c.tip}</div>
+      </div>`).join('');
+
+    const diseaseCards = (r.diseases_or_problems || []).map(d => `
+      <div class="card disease full">
+        <div class="card-icon">🔴</div>
+        <div class="card-title">Issue Detected: ${d.name}</div>
+        <div class="card-body"><strong>Symptoms:</strong> ${d.symptoms}</div>
+      </div>
+      <div class="card cure full">
+        <div class="card-icon">🏠</div>
+        <div class="card-title">Home Remedy</div>
+        <div class="card-body">${d.home_cure.replace(/\n/g, '<br/>')}</div>
+      </div>`).join('');
+
+    const noDiseases = (!r.diseases_or_problems || r.diseases_or_problems.length === 0) ? `
+      <div class="card full" style="border-color:rgba(76,175,114,0.3);background:rgba(76,175,114,0.05)">
+        <div class="card-icon">✅</div>
+        <div class="card-title">No diseases detected</div>
+        <div class="card-body">Your plant looks healthy! Keep up the great care.</div>
+      </div>` : '';
+
+    document.getElementById('results').innerHTML = `
+      <div class="result-header">
+        <span class="plant-name-badge">🌿 ${r.plant_name || 'Unknown Plant'}</span>
+        <span class="health-badge ${healthClass}">${healthIcon} ${r.health_status}</span>
+      </div>
+
+      <div class="cards-grid">
+        <div class="card full">
+          <div class="card-icon">🩺</div>
+          <div class="card-title">Health Summary</div>
+          <div class="card-body">${r.health_summary}</div>
+        </div>
+        <div class="card full">
+          <div class="card-icon">🔍</div>
+          <div class="card-title">Visual Observations</div>
+          <div class="card-body"><ul>${obsList}</ul></div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <div style="font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:16px;opacity:0.8;">🌻 Care Guide</div>
+      <div class="cards-grid">${careTips}</div>
+
+      <div class="divider"></div>
+      <div style="font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:16px;opacity:0.8;">🏥 Health Issues & Home Remedies</div>
+      <div class="cards-grid">${diseaseCards || noDiseases}</div>
+
+      <div class="divider"></div>
+      <div class="card" style="border-color:rgba(201,168,76,0.3);background:rgba(201,168,76,0.04)">
+        <div class="card-icon">💡</div>
+        <div class="card-title">Fun Fact</div>
+        <div class="card-body">${r.fun_fact || ''}</div>
+      </div>
+    `;
+    document.getElementById('results').style.display = 'block';
+    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  const saved = sessionStorage.getItem('gemini_key');
+  if (saved) document.getElementById('apiKey').value = saved;
+</script>
+</body>
+</html>
