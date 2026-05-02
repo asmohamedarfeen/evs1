@@ -1,563 +1,1310 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Botanica — Plant Health Adviser</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
-<style>
-  :root {
-    --bg: #0d1a0f;
-    --surface: #111f13;
-    --card: #152118;
-    --border: #1e3322;
-    --accent: #4caf72;
-    --accent2: #a8d5a2;
-    --gold: #c9a84c;
-    --text: #e8f0e9;
-    --muted: #6b8f71;
-    --danger: #e05252;
-    --warn: #d4a843;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-  body::before {
-    content: '';
-    position: fixed; inset: 0;
-    background:
-      radial-gradient(ellipse 80% 50% at 20% 10%, rgba(76,175,114,0.07) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 40% at 80% 80%, rgba(168,213,162,0.05) 0%, transparent 50%);
-    pointer-events: none;
-    z-index: 0;
-  }
-  header {
-    position: relative; z-index: 1;
-    text-align: center;
-    padding: 52px 20px 32px;
-    border-bottom: 1px solid var(--border);
-  }
-  .logo-leaf {
-    font-size: 2.4rem;
-    display: inline-block;
-    animation: sway 4s ease-in-out infinite;
-    margin-bottom: 8px;
-  }
-  @keyframes sway {
-    0%, 100% { transform: rotate(-5deg); }
-    50% { transform: rotate(5deg); }
-  }
-  header h1 {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(2rem, 5vw, 3rem);
-    font-weight: 700;
-    letter-spacing: -0.5px;
-    color: var(--text);
-  }
-  header h1 span { color: var(--accent); }
-  header p {
-    margin-top: 8px;
-    color: var(--muted);
-    font-size: 0.95rem;
-    font-weight: 300;
-    letter-spacing: 0.5px;
-  }
-  .container {
-    position: relative; z-index: 1;
-    max-width: 860px;
-    margin: 0 auto;
-    padding: 40px 20px 80px;
-  }
-  .api-section {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 24px 28px;
-    margin-bottom: 28px;
-  }
-  .api-section label {
-    display: block;
-    font-size: 0.78rem;
-    font-weight: 500;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 10px;
-  }
-  .api-row { display: flex; gap: 10px; }
-  .api-row input {
-    flex: 1;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 16px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.9rem;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  .api-row input:focus { border-color: var(--accent); }
-  .api-row input::placeholder { color: var(--muted); }
-  .btn-save {
-    background: var(--accent);
-    color: #0d1a0f;
-    border: none;
-    border-radius: 10px;
-    padding: 12px 22px;
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 500;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: opacity 0.2s;
-    white-space: nowrap;
-  }
-  .btn-save:hover { opacity: 0.85; }
-  .api-hint { margin-top: 10px; font-size: 0.78rem; color: var(--muted); }
-  .api-hint a { color: var(--accent2); }
-  .upload-zone {
-    position: relative;
-    background: var(--card);
-    border: 2px dashed var(--border);
-    border-radius: 20px;
-    padding: 48px 28px;
-    text-align: center;
-    cursor: pointer;
-    transition: border-color 0.3s, background 0.3s;
-    margin-bottom: 28px;
-    overflow: hidden;
-  }
-  .upload-zone:hover, .upload-zone.drag-over {
-    border-color: var(--accent);
-    background: rgba(76,175,114,0.04);
-  }
-  .upload-zone input[type=file] {
-    position: absolute; inset: 0;
-    opacity: 0; cursor: pointer; width: 100%; height: 100%;
-  }
-  .upload-icon { font-size: 3rem; margin-bottom: 14px; opacity: 0.7; }
-  .upload-zone h3 {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.3rem;
-    font-weight: 400;
-    margin-bottom: 6px;
-  }
-  .upload-zone p { font-size: 0.85rem; color: var(--muted); }
-  .preview-wrap {
-    display: none;
-    position: relative;
-    margin-bottom: 28px;
-    border-radius: 20px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    max-height: 420px;
-  }
-  .preview-wrap img {
-    width: 100%; display: block; object-fit: cover; max-height: 420px;
-  }
-  .preview-overlay {
-    position: absolute; inset: 0;
-    background: linear-gradient(to top, rgba(13,26,15,0.8) 0%, transparent 50%);
-    display: flex; align-items: flex-end; padding: 20px;
-    justify-content: space-between;
-  }
-  .preview-overlay span { font-size: 0.85rem; color: var(--accent2); }
-  .btn-change {
-    background: rgba(255,255,255,0.1);
-    border: 1px solid rgba(255,255,255,0.2);
-    color: var(--text);
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 0.82rem;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  .btn-change:hover { background: rgba(255,255,255,0.18); }
-  .btn-analyse {
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    width: 100%;
-    background: linear-gradient(135deg, var(--accent) 0%, #38a85e 100%);
-    color: #0a150b;
-    border: none;
-    border-radius: 14px;
-    padding: 18px 24px;
-    font-family: 'Playfair Display', serif;
-    font-size: 1.15rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
-    box-shadow: 0 8px 32px rgba(76,175,114,0.25);
-    margin-bottom: 36px;
-  }
-  .btn-analyse:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 40px rgba(76,175,114,0.35);
-  }
-  .btn-analyse:disabled { opacity: 0.5; cursor: not-allowed; }
-  .btn-analyse .spinner {
-    width: 18px; height: 18px;
-    border: 2px solid rgba(0,0,0,0.2);
-    border-top-color: #0a150b;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    display: none;
-  }
-  .btn-analyse.loading .spinner { display: block; }
-  .btn-analyse.loading .btn-text { opacity: 0.6; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  #results { display: none; }
-  .result-header {
-    display: flex; align-items: center; gap: 14px;
-    margin-bottom: 24px; flex-wrap: wrap;
-  }
-  .plant-name-badge {
-    background: linear-gradient(135deg, var(--accent) 20%, #38a85e);
-    color: #0a150b;
-    padding: 6px 18px;
-    border-radius: 100px;
-    font-size: 0.8rem;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-  }
-  .health-badge {
-    padding: 6px 18px;
-    border-radius: 100px;
-    font-size: 0.8rem;
-    font-weight: 500;
-  }
-  .health-good { background: rgba(76,175,114,0.15); color: var(--accent); border: 1px solid rgba(76,175,114,0.3); }
-  .health-warning { background: rgba(212,168,67,0.15); color: var(--warn); border: 1px solid rgba(212,168,67,0.3); }
-  .health-poor { background: rgba(224,82,82,0.15); color: var(--danger); border: 1px solid rgba(224,82,82,0.3); }
-  .cards-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 16px;
-  }
-  @media (max-width: 620px) { .cards-grid { grid-template-columns: 1fr; } }
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 22px;
-    transition: border-color 0.2s;
-  }
-  .card:hover { border-color: var(--accent); }
-  .card.full { grid-column: 1 / -1; }
-  .card.disease { border-color: rgba(224,82,82,0.3); background: rgba(224,82,82,0.04); }
-  .card.cure { border-color: rgba(201,168,76,0.3); background: rgba(201,168,76,0.04); }
-  .card-icon { font-size: 1.6rem; margin-bottom: 10px; }
-  .card-title {
-    font-size: 0.7rem;
-    font-weight: 500;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 10px;
-  }
-  .card-body {
-    font-size: 0.92rem;
-    line-height: 1.7;
-    color: var(--text);
-  }
-  .card-body ul { padding-left: 18px; }
-  .card-body li { margin-bottom: 6px; }
-  .card-body strong { color: var(--accent2); }
-  .error-box {
-    background: rgba(224,82,82,0.08);
-    border: 1px solid rgba(224,82,82,0.3);
-    border-radius: 12px;
-    padding: 16px 20px;
-    color: #e88;
-    font-size: 0.9rem;
-    margin-bottom: 20px;
-    display: none;
-  }
-  .divider { height: 1px; background: var(--border); margin: 32px 0; }
-  footer {
-    text-align: center;
-    color: var(--muted);
-    font-size: 0.78rem;
-    padding: 20px;
-    border-top: 1px solid var(--border);
-    position: relative; z-index: 1;
-  }
-</style>
-</head>
-<body>
-
-<header>
-  <div class="logo-leaf">🌿</div>
-  <h1>Bota<span>nica</span></h1>
-  <p>AI-powered plant health diagnosis & care advisor</p>
-</header>
-
-<div class="container">
-
-  <div class="api-section">
-    <label>🔑 Gemini API Key</label>
-    <div class="api-row">
-      <input type="password" id="apiKey" placeholder="Paste your Gemini API key here…" />
-      <button class="btn-save" onclick="saveKey()">Save</button>
-    </div>
-    <p class="api-hint">
-      Get a free key at <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>.
-      Your key is stored only in this browser session.
-    </p>
-  </div>
-
-  <div class="upload-zone" id="uploadZone">
-    <input type="file" id="fileInput" accept="image/*" onchange="handleFile(event)" />
-    <div class="upload-icon">📷</div>
-    <h3>Upload a photo of your plant</h3>
-    <p>Drag & drop or click to browse · JPG, PNG, WEBP</p>
-  </div>
-
-  <div class="preview-wrap" id="previewWrap">
-    <img id="previewImg" src="" alt="Plant preview" />
-    <div class="preview-overlay">
-      <span id="fileName">plant.jpg</span>
-      <button class="btn-change" onclick="resetImage()">Change photo</button>
-    </div>
-  </div>
-
-  <div class="error-box" id="errorBox"></div>
-
-  <button class="btn-analyse" id="analyseBtn" onclick="analyse()" disabled>
-    <div class="spinner"></div>
-    <span class="btn-text">🔬 Analyse My Plant</span>
-  </button>
-
-  <div id="results"></div>
-
-</div>
-
-<footer>Botanica uses Google Gemini Vision AI · Results are advisory — consult a horticulturist for serious concerns</footer>
-
-<script>
-  let imageBase64 = null;
-  let imageType = 'image/jpeg';
-
-  const zone = document.getElementById('uploadZone');
-  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
-  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
-  zone.addEventListener('drop', e => {
-    e.preventDefault(); zone.classList.remove('drag-over');
-    const file = e.dataTransfer.files[0];
-    if (file) processFile(file);
-  });
-
-  function handleFile(e) {
-    const file = e.target.files[0];
-    if (file) processFile(file);
-  }
-
-  function processFile(file) {
-    imageType = file.type || 'image/jpeg';
-    document.getElementById('fileName').textContent = file.name;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      const result = ev.target.result;
-      imageBase64 = result.split(',')[1];
-      document.getElementById('previewImg').src = result;
-      document.getElementById('uploadZone').style.display = 'none';
-      document.getElementById('previewWrap').style.display = 'block';
-      document.getElementById('analyseBtn').disabled = false;
-      document.getElementById('results').style.display = 'none';
-      document.getElementById('results').innerHTML = '';
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function resetImage() {
-    imageBase64 = null;
-    document.getElementById('uploadZone').style.display = 'block';
-    document.getElementById('previewWrap').style.display = 'none';
-    document.getElementById('analyseBtn').disabled = true;
-    document.getElementById('results').style.display = 'none';
-    document.getElementById('results').innerHTML = '';
-    document.getElementById('fileInput').value = '';
-    hideError();
-  }
-
-  function saveKey() {
-    const key = document.getElementById('apiKey').value.trim();
-    if (key) { sessionStorage.setItem('gemini_key', key); showToast('API key saved ✓'); }
-  }
-
-  function getKey() {
-    return document.getElementById('apiKey').value.trim() || sessionStorage.getItem('gemini_key') || '';
-  }
-
-  function showError(msg) {
-    const el = document.getElementById('errorBox');
-    el.textContent = msg; el.style.display = 'block';
-  }
-  function hideError() { document.getElementById('errorBox').style.display = 'none'; }
-
-  function showToast(msg) {
-    const t = document.createElement('div');
-    t.textContent = msg;
-    Object.assign(t.style, {
-      position:'fixed', bottom:'24px', right:'24px', background:'var(--accent)',
-      color:'#0a150b', padding:'10px 20px', borderRadius:'10px',
-      fontFamily:"'DM Sans',sans-serif", fontSize:'0.88rem',
-      zIndex:'9999', fontWeight:'500'
-    });
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 2500);
-  }
-
-  async function analyse() {
-    hideError();
-    const key = getKey();
-    if (!key) { showError('Please enter your Gemini API key first.'); return; }
-    if (!imageBase64) { showError('Please upload a plant photo first.'); return; }
-
-    const btn = document.getElementById('analyseBtn');
-    btn.classList.add('loading');
-    btn.disabled = true;
-
-    const prompt = `You are an expert botanist and plant health specialist. Carefully analyze this plant image and provide a detailed report in the following JSON format exactly (no markdown, no extra text, pure JSON only):
-
-{
-  "plant_name": "Common name (Scientific name)",
-  "health_status": "Good",
-  "health_summary": "One-sentence overall health assessment",
-  "observations": ["observation 1", "observation 2", "observation 3"],
-  "care_tips": [
-    {"title": "Watering", "tip": "Specific watering advice"},
-    {"title": "Sunlight", "tip": "Specific light advice"},
-    {"title": "Soil & Fertilizer", "tip": "Specific soil advice"},
-    {"title": "Pruning & Maintenance", "tip": "Specific pruning advice"}
-  ],
-  "diseases_or_problems": [
-    {
-      "name": "Problem name",
-      "symptoms": "What you see in the image",
-      "home_cure": "Step-by-step home remedy using household items like neem oil, baking soda, dish soap, cinnamon, hydrogen peroxide, garlic spray, etc."
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RootSense | Plant Pot Advisory</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f3efe4;
+      --ink: #142114;
+      --muted: #5d6f5f;
+      --surface: rgba(255, 250, 240, 0.72);
+      --surface-strong: #fffaf0;
+      --line: rgba(20, 33, 20, 0.12);
+      --leaf: #376a3f;
+      --leaf-bright: #4f8f58;
+      --soil: #6b4b38;
+      --gold: #bb8a3c;
+      --warn: #b66a32;
+      --danger: #a2463d;
+      --shadow: 0 24px 60px rgba(45, 58, 39, 0.12);
     }
-  ],
-  "fun_fact": "An interesting fact about this plant"
-}
 
-health_status must be exactly one of: "Good", "Fair", or "Poor".
-If no diseases are detected, set diseases_or_problems to [].
-Respond ONLY with valid JSON, nothing else.`;
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
 
-    try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [
-                { text: prompt },
-                { inline_data: { mime_type: imageType, data: imageBase64 } }
-              ]
-            }],
-            generationConfig: { temperature: 0.4, maxOutputTokens: 1500 }
-          })
-        }
-      );
+    body {
+      min-height: 100vh;
+      font-family: "Manrope", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(79, 143, 88, 0.16), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(187, 138, 60, 0.12), transparent 24%),
+        linear-gradient(180deg, #f6f1e6 0%, #efe7d6 100%);
+      overflow-x: hidden;
+    }
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error?.message || 'API error ' + res.status);
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(20, 33, 20, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(20, 33, 20, 0.03) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 20px 72px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 24px;
+      align-items: stretch;
+      margin-bottom: 24px;
+    }
+
+    .hero-panel,
+    .hero-aside,
+    .panel,
+    .result-card {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: var(--surface);
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-panel {
+      padding: 30px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-panel::after {
+      content: "";
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      right: -80px;
+      top: -80px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(79, 143, 88, 0.22), transparent 70%);
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid rgba(55, 106, 63, 0.18);
+      border-radius: 999px;
+      padding: 10px 14px;
+      color: var(--leaf);
+      background: rgba(79, 143, 88, 0.08);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      font-family: "Fraunces", serif;
+      font-size: clamp(42px, 6vw, 76px);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+      max-width: 640px;
+      margin-bottom: 16px;
+    }
+
+    h1 span { color: var(--leaf-bright); }
+
+    .hero-copy {
+      max-width: 620px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.7;
+      margin-bottom: 22px;
+    }
+
+    .hero-points {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .hero-point {
+      border: 1px solid rgba(20, 33, 20, 0.08);
+      border-radius: 18px;
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.35);
+    }
+
+    .hero-point strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .hero-point span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .hero-aside {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.24)),
+        radial-gradient(circle at top right, rgba(107, 75, 56, 0.16), transparent 46%);
+    }
+
+    .mini-label {
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-size: 11px;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .aside-title {
+      font-family: "Fraunces", serif;
+      font-size: 30px;
+      line-height: 1.05;
+      margin-bottom: 10px;
+    }
+
+    .aside-copy {
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .aside-strip {
+      margin-top: 24px;
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(20, 33, 20, 0.04);
+      border: 1px solid rgba(20, 33, 20, 0.07);
+    }
+
+    .aside-strip strong {
+      display: block;
+      font-size: 14px;
+      margin-bottom: 6px;
+    }
+
+    .aside-strip p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+
+    .panel {
+      padding: 24px;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 18px;
+    }
+
+    .panel-head h2 {
+      font-family: "Fraunces", serif;
+      font-size: 28px;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .panel-head p {
+      color: var(--muted);
+      max-width: 560px;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .pill {
+      flex-shrink: 0;
+      border: 1px solid rgba(55, 106, 63, 0.18);
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--leaf);
+      background: rgba(79, 143, 88, 0.08);
+    }
+
+    .key-grid {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .input,
+    .select {
+      width: 100%;
+      border: 1px solid rgba(20, 33, 20, 0.1);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.75);
+      color: var(--ink);
+      font: inherit;
+      padding: 15px 16px;
+      outline: none;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .input:focus,
+    .select:focus {
+      border-color: rgba(55, 106, 63, 0.45);
+      transform: translateY(-1px);
+    }
+
+    .button {
+      border: none;
+      border-radius: 16px;
+      padding: 15px 20px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .button:hover { transform: translateY(-1px); }
+    .button:disabled { cursor: not-allowed; opacity: 0.55; transform: none; }
+
+    .button.secondary {
+      color: var(--ink);
+      background: rgba(20, 33, 20, 0.08);
+      border: 1px solid rgba(20, 33, 20, 0.08);
+    }
+
+    .button.primary {
+      width: 100%;
+      background: linear-gradient(135deg, #3e7748, #6ba362);
+      color: #f8fff8;
+      box-shadow: 0 18px 28px rgba(62, 119, 72, 0.22);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .hint {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .hint a { color: var(--leaf); }
+
+    .config-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .route-box {
+      margin-top: 16px;
+      border-radius: 18px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.42);
+      border: 1px solid rgba(20, 33, 20, 0.08);
+    }
+
+    .route-box strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+
+    .route-box p,
+    .route-box div {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .upload-zone {
+      position: relative;
+      border: 2px dashed rgba(55, 106, 63, 0.22);
+      border-radius: 24px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.55), rgba(255,255,255,0.25)),
+        radial-gradient(circle at top center, rgba(79, 143, 88, 0.12), transparent 38%);
+      padding: 42px 22px;
+      text-align: center;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    .upload-zone.dragover {
+      border-color: var(--leaf-bright);
+      transform: translateY(-2px);
+    }
+
+    .upload-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .upload-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 24px;
+      margin: 0 auto 18px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, rgba(55, 106, 63, 0.16), rgba(107, 75, 56, 0.16));
+      font-size: 30px;
+    }
+
+    .upload-zone h3 {
+      font-family: "Fraunces", serif;
+      font-size: 26px;
+      margin-bottom: 8px;
+    }
+
+    .upload-zone p {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .preview {
+      display: none;
+      overflow: hidden;
+      border-radius: 24px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.55);
+      margin-top: 16px;
+    }
+
+    .preview.show { display: block; }
+
+    .preview img {
+      width: 100%;
+      max-height: 440px;
+      object-fit: cover;
+      display: block;
+      background: rgba(20, 33, 20, 0.05);
+    }
+
+    .preview-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-top: 1px solid var(--line);
+    }
+
+    .preview-meta strong {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 14px;
+    }
+
+    .preview-meta span {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .analyze-button .spinner {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.32);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      position: absolute;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      animation: spin 0.8s linear infinite;
+    }
+
+    .analyze-button.loading .spinner { display: block; }
+    .analyze-button.loading .btn-copy { opacity: 0.82; }
+
+    @keyframes spin {
+      to { transform: translateY(-50%) rotate(360deg); }
+    }
+
+    .error-box {
+      display: none;
+      border-radius: 18px;
+      padding: 16px 18px;
+      background: rgba(162, 70, 61, 0.08);
+      color: var(--danger);
+      border: 1px solid rgba(162, 70, 61, 0.2);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .error-box.show { display: block; }
+
+    .results {
+      display: none;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 16px;
+      align-items: start;
+    }
+
+    .results.show { display: grid; }
+
+    .result-card {
+      padding: 22px;
+    }
+
+    .span-12 { grid-column: span 12; }
+    .span-8 { grid-column: span 8; }
+    .span-6 { grid-column: span 6; }
+    .span-4 { grid-column: span 4; }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .status-kicker {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .status-title {
+      font-family: "Fraunces", serif;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1;
+      margin-bottom: 10px;
+    }
+
+    .status-summary {
+      max-width: 660px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    .status-badge {
+      padding: 12px 16px;
+      border-radius: 18px;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+      border: 1px solid transparent;
+    }
+
+    .status-good {
+      background: rgba(55, 106, 63, 0.1);
+      color: var(--leaf);
+      border-color: rgba(55, 106, 63, 0.18);
+    }
+
+    .status-watch {
+      background: rgba(182, 106, 50, 0.1);
+      color: var(--warn);
+      border-color: rgba(182, 106, 50, 0.18);
+    }
+
+    .status-poor {
+      background: rgba(162, 70, 61, 0.1);
+      color: var(--danger);
+      border-color: rgba(162, 70, 61, 0.18);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .stat {
+      border-radius: 18px;
+      padding: 18px;
+      background: rgba(255,255,255,0.4);
+      border: 1px solid rgba(20, 33, 20, 0.07);
+    }
+
+    .stat small {
+      display: block;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .stat strong {
+      display: block;
+      font-family: "Fraunces", serif;
+      font-size: 28px;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .card-title {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 12px;
+      font-weight: 700;
+    }
+
+    .issue-list,
+    .tip-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .issue {
+      border-radius: 18px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.46);
+      border: 1px solid rgba(20, 33, 20, 0.07);
+    }
+
+    .issue-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .issue-head strong {
+      font-size: 16px;
+    }
+
+    .severity {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      border-radius: 999px;
+      padding: 7px 10px;
+    }
+
+    .severity.low {
+      background: rgba(55, 106, 63, 0.1);
+      color: var(--leaf);
+    }
+
+    .severity.medium {
+      background: rgba(182, 106, 50, 0.1);
+      color: var(--warn);
+    }
+
+    .severity.high {
+      background: rgba(162, 70, 61, 0.1);
+      color: var(--danger);
+    }
+
+    .issue p,
+    .result-copy,
+    .tip {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .issue p + p { margin-top: 8px; }
+
+    .tip {
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.42);
+      border: 1px solid rgba(20, 33, 20, 0.06);
+    }
+
+    .tip strong {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--ink);
+    }
+
+    .disclaimer {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+      text-align: center;
+      padding-top: 8px;
+    }
+
+    @media (max-width: 900px) {
+      .hero {
+        grid-template-columns: 1fr;
       }
 
-      const data = await res.json();
-      const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      const clean = raw.replace(/```json|```/g, '').trim();
-      const report = JSON.parse(clean);
-      renderResults(report);
+      .hero-points,
+      .config-grid,
+      .key-grid,
+      .stats {
+        grid-template-columns: 1fr;
+      }
 
-    } catch (e) {
-      showError('Error: ' + (e.message.includes('JSON') ? 'Could not parse AI response. Please try again.' : e.message));
-    } finally {
-      btn.classList.remove('loading');
-      btn.disabled = false;
+      .span-8,
+      .span-6,
+      .span-4 {
+        grid-column: span 12;
+      }
     }
-  }
 
-  function renderResults(r) {
-    const healthClass = r.health_status === 'Good' ? 'health-good' : r.health_status === 'Fair' ? 'health-warning' : 'health-poor';
-    const healthIcon = r.health_status === 'Good' ? '🌱' : r.health_status === 'Fair' ? '⚠️' : '🚨';
-
-    const obsList = (r.observations || []).map(o => `<li>${o}</li>`).join('');
-
-    const careTips = (r.care_tips || []).map(c => `
-      <div class="card">
-        <div class="card-title">${c.title}</div>
-        <div class="card-body">${c.tip}</div>
-      </div>`).join('');
-
-    const diseaseCards = (r.diseases_or_problems || []).map(d => `
-      <div class="card disease full">
-        <div class="card-icon">🔴</div>
-        <div class="card-title">Issue Detected: ${d.name}</div>
-        <div class="card-body"><strong>Symptoms:</strong> ${d.symptoms}</div>
-      </div>
-      <div class="card cure full">
-        <div class="card-icon">🏠</div>
-        <div class="card-title">Home Remedy</div>
-        <div class="card-body">${d.home_cure.replace(/\n/g, '<br/>')}</div>
-      </div>`).join('');
-
-    const noDiseases = (!r.diseases_or_problems || r.diseases_or_problems.length === 0) ? `
-      <div class="card full" style="border-color:rgba(76,175,114,0.3);background:rgba(76,175,114,0.05)">
-        <div class="card-icon">✅</div>
-        <div class="card-title">No diseases detected</div>
-        <div class="card-body">Your plant looks healthy! Keep up the great care.</div>
-      </div>` : '';
-
-    document.getElementById('results').innerHTML = `
-      <div class="result-header">
-        <span class="plant-name-badge">🌿 ${r.plant_name || 'Unknown Plant'}</span>
-        <span class="health-badge ${healthClass}">${healthIcon} ${r.health_status}</span>
-      </div>
-
-      <div class="cards-grid">
-        <div class="card full">
-          <div class="card-icon">🩺</div>
-          <div class="card-title">Health Summary</div>
-          <div class="card-body">${r.health_summary}</div>
-        </div>
-        <div class="card full">
-          <div class="card-icon">🔍</div>
-          <div class="card-title">Visual Observations</div>
-          <div class="card-body"><ul>${obsList}</ul></div>
+    @media (max-width: 640px) {
+      .page { padding-inline: 14px; }
+      .hero-panel,
+      .hero-aside,
+      .panel,
+      .result-card { border-radius: 22px; }
+      .panel-head { flex-direction: column; }
+      .button-row { grid-template-columns: 1fr; }
+      .preview-bar,
+      .status-row { flex-direction: column; align-items: flex-start; }
+      h1 { font-size: 40px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div class="hero-panel">
+        <div class="eyebrow">Plant Pot Advisory System</div>
+        <h1>Read the <span>plant</span>, the soil, and the pot.</h1>
+        <p class="hero-copy">
+          Upload one photo of your plant and pot. RootSense checks visible stress signs, likely causes, pot setup issues, and gives natural cure recommendations you can use at home.
+        </p>
+        <div class="hero-points">
+          <div class="hero-point">
+            <strong>Leaf diagnosis</strong>
+            <span>Spot yellowing, droop, burn, fungus, pests, and nutrient stress.</span>
+          </div>
+          <div class="hero-point">
+            <strong>Pot assessment</strong>
+            <span>Review soil moisture cues, crowding, drainage, and container fit.</span>
+          </div>
+          <div class="hero-point">
+            <strong>Natural treatment</strong>
+            <span>Focus on neem oil, pruning, airflow, watering fixes, and organic remedies.</span>
+          </div>
         </div>
       </div>
 
-      <div class="divider"></div>
-      <div style="font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:16px;opacity:0.8;">🌻 Care Guide</div>
-      <div class="cards-grid">${careTips}</div>
+      <aside class="hero-aside">
+        <div>
+          <div class="mini-label">Recommended model route</div>
+          <div class="aside-title">OpenRouter + Gemini 2.5 Flash</div>
+          <p class="aside-copy">
+            Chosen as the default because it is strong on image understanding, structured output, and latency. The app also supports a precision route when you want slower but more conservative diagnosis.
+          </p>
+        </div>
+        <div class="aside-strip">
+          <strong>Best photo input</strong>
+          <p>Capture the full pot, the top soil surface, and the damaged leaves in one frame. Natural daylight improves symptom detection.</p>
+        </div>
+      </aside>
+    </section>
 
-      <div class="divider"></div>
-      <div style="font-family:'Playfair Display',serif;font-size:1.1rem;margin-bottom:16px;opacity:0.8;">🏥 Health Issues & Home Remedies</div>
-      <div class="cards-grid">${diseaseCards || noDiseases}</div>
+    <section class="workspace">
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Connection</h2>
+            <p>Use your OpenRouter key in-browser. This is acceptable for local testing, but production should proxy requests through a server.</p>
+          </div>
+          <div class="pill">Browser session only</div>
+        </div>
 
-      <div class="divider"></div>
-      <div class="card" style="border-color:rgba(201,168,76,0.3);background:rgba(201,168,76,0.04)">
-        <div class="card-icon">💡</div>
-        <div class="card-title">Fun Fact</div>
-        <div class="card-body">${r.fun_fact || ''}</div>
-      </div>
-    `;
-    document.getElementById('results').style.display = 'block';
-    document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
+        <div class="key-grid">
+          <div class="field">
+            <label for="apiKey">OpenRouter API Key</label>
+            <input class="input" type="password" id="apiKey" placeholder="sk-or-v1-..." autocomplete="off" />
+            <p class="hint">Create or rotate keys at <a href="https://openrouter.ai/settings/keys" target="_blank" rel="noreferrer">openrouter.ai/settings/keys</a>.</p>
+          </div>
+          <button class="button secondary" id="saveKeyBtn" type="button">Save Key</button>
+        </div>
 
-  const saved = sessionStorage.getItem('gemini_key');
-  if (saved) document.getElementById('apiKey').value = saved;
-</script>
+        <div class="config-grid">
+          <div class="field">
+            <label for="modelRoute">Diagnosis Route</label>
+            <select class="select" id="modelRoute">
+              <option value="balanced">Balanced plant diagnosis</option>
+              <option value="precision">Precision diagnosis</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="focusArea">Focus</label>
+            <select class="select" id="focusArea">
+              <option value="full">Plant + pot + natural cure</option>
+              <option value="leaf">Leaf problem priority</option>
+              <option value="pot">Pot and watering priority</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="route-box" id="routeBox"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>Upload</h2>
+            <p>The analysis is based only on what the image shows. It cannot confirm root rot, hidden pests, or exact pathogens from an image alone.</p>
+          </div>
+        </div>
+
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="fileInput" accept="image/*" />
+          <div class="upload-icon">🪴</div>
+          <h3>Drop a plant photo here</h3>
+          <p>Show the leaves, stem, soil, and pot rim if possible. JPG, PNG, WEBP, and HEIC are accepted by the browser if supported.</p>
+        </div>
+
+        <div class="preview" id="preview">
+          <img id="previewImg" alt="Plant preview" />
+          <div class="preview-bar">
+            <div class="preview-meta">
+              <strong id="previewName">plant.jpg</strong>
+              <span id="previewMeta">Ready for diagnosis</span>
+            </div>
+            <button class="button secondary" type="button" id="removeBtn">Remove Photo</button>
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button class="button secondary" type="button" id="resetBtn">Reset Results</button>
+          <button class="button primary analyze-button" type="button" id="analyzeBtn" disabled>
+            <span class="btn-copy">Analyze Plant Health</span>
+            <span class="spinner"></span>
+          </button>
+        </div>
+      </section>
+
+      <div class="error-box" id="errorBox"></div>
+
+      <section class="results" id="results">
+        <article class="result-card span-12">
+          <div class="status-row">
+            <div>
+              <div class="status-kicker" id="resultKicker">Plant diagnosis</div>
+              <div class="status-title" id="plantName">Unknown plant</div>
+              <p class="status-summary" id="problemSummary"></p>
+            </div>
+            <div class="status-badge status-watch" id="healthBadge">Needs review</div>
+          </div>
+        </article>
+
+        <article class="result-card span-12">
+          <div class="stats">
+            <div class="stat">
+              <small>Condition</small>
+              <strong id="overallCondition">Watch</strong>
+              <span>Overall visual assessment from the uploaded image.</span>
+            </div>
+            <div class="stat">
+              <small>Confidence</small>
+              <strong id="confidenceScore">Medium</strong>
+              <span>How clear the visual evidence appears in the photo.</span>
+            </div>
+            <div class="stat">
+              <small>Issues Found</small>
+              <strong id="issueCount">0</strong>
+              <span>Likely visible problems affecting plant or pot health.</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="result-card span-8">
+          <div class="card-title">Likely Problems</div>
+          <div class="issue-list" id="issueList"></div>
+        </article>
+
+        <article class="result-card span-4">
+          <div class="card-title">Pot Assessment</div>
+          <p class="result-copy" id="potAssessment"></p>
+        </article>
+
+        <article class="result-card span-6">
+          <div class="card-title">Natural Care Plan</div>
+          <div class="tip-list" id="carePlan"></div>
+        </article>
+
+        <article class="result-card span-6">
+          <div class="card-title">Urgent Action</div>
+          <p class="result-copy" id="urgentAction"></p>
+        </article>
+
+        <article class="result-card span-12">
+          <div class="card-title">Advisory Note</div>
+          <p class="result-copy" id="advisoryNote"></p>
+        </article>
+      </section>
+
+      <p class="disclaimer">Image-based plant advice is directional, not a lab diagnosis. If the plant is rapidly collapsing, isolate it from other plants and inspect roots, undersides of leaves, and drainage holes directly.</p>
+    </section>
+  </main>
+
+  <script>
+    const ROUTES = {
+      balanced: {
+        title: "Balanced plant diagnosis",
+        description: "Best default for day-to-day plant checks. Uses a strong multimodal model with fast response and structured output.",
+        model: "google/gemini-2.5-flash"
+      },
+      precision: {
+        title: "Precision diagnosis",
+        description: "Use when symptoms are subtle or mixed. Slower, but pushes for more careful issue separation and treatment detail.",
+        model: "google/gemini-2.5-pro"
+      }
+    };
+
+    const fileInput = document.getElementById("fileInput");
+    const uploadZone = document.getElementById("uploadZone");
+    const preview = document.getElementById("preview");
+    const previewImg = document.getElementById("previewImg");
+    const previewName = document.getElementById("previewName");
+    const previewMeta = document.getElementById("previewMeta");
+    const removeBtn = document.getElementById("removeBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const analyzeBtn = document.getElementById("analyzeBtn");
+    const saveKeyBtn = document.getElementById("saveKeyBtn");
+    const apiKey = document.getElementById("apiKey");
+    const modelRoute = document.getElementById("modelRoute");
+    const focusArea = document.getElementById("focusArea");
+    const routeBox = document.getElementById("routeBox");
+    const errorBox = document.getElementById("errorBox");
+    const results = document.getElementById("results");
+
+    let currentFile = null;
+    let currentDataUrl = "";
+    let currentMimeType = "image/jpeg";
+
+    const resultKicker = document.getElementById("resultKicker");
+    const plantName = document.getElementById("plantName");
+    const problemSummary = document.getElementById("problemSummary");
+    const healthBadge = document.getElementById("healthBadge");
+    const overallCondition = document.getElementById("overallCondition");
+    const confidenceScore = document.getElementById("confidenceScore");
+    const issueCount = document.getElementById("issueCount");
+    const issueList = document.getElementById("issueList");
+    const potAssessment = document.getElementById("potAssessment");
+    const carePlan = document.getElementById("carePlan");
+    const urgentAction = document.getElementById("urgentAction");
+    const advisoryNote = document.getElementById("advisoryNote");
+
+    function updateRouteBox() {
+      const route = ROUTES[modelRoute.value] || ROUTES.balanced;
+      routeBox.innerHTML = `
+        <strong>${escapeHtml(route.title)}</strong>
+        <p>${escapeHtml(route.description)}</p>
+        <div>Model: ${escapeHtml(route.model)}</div>
+      `;
+    }
+
+    function saveKey() {
+      const key = apiKey.value.trim();
+      if (!key) {
+        showError("Enter an OpenRouter API key before saving.");
+        return;
+      }
+      sessionStorage.setItem("openrouter_key", key);
+      hideError();
+    }
+
+    function loadSavedKey() {
+      const saved = sessionStorage.getItem("openrouter_key");
+      if (saved) apiKey.value = saved;
+    }
+
+    function updateAnalyzeState() {
+      analyzeBtn.disabled = !(apiKey.value.trim() && currentDataUrl);
+    }
+
+    function clearResults() {
+      results.classList.remove("show");
+      issueList.innerHTML = "";
+      potAssessment.textContent = "";
+      carePlan.innerHTML = "";
+      urgentAction.textContent = "";
+      advisoryNote.textContent = "";
+    }
+
+    function resetImage() {
+      currentFile = null;
+      currentDataUrl = "";
+      currentMimeType = "image/jpeg";
+      fileInput.value = "";
+      preview.classList.remove("show");
+      uploadZone.style.display = "";
+      clearResults();
+      hideError();
+      updateAnalyzeState();
+    }
+
+    function showError(message) {
+      errorBox.textContent = message;
+      errorBox.classList.add("show");
+    }
+
+    function hideError() {
+      errorBox.classList.remove("show");
+      errorBox.textContent = "";
+    }
+
+    function getFocusPrompt() {
+      const focus = focusArea.value;
+      if (focus === "leaf") {
+        return "Prioritize leaf symptoms, spotting, curling, yellowing, pests, mildew, and natural foliar treatment.";
+      }
+      if (focus === "pot") {
+        return "Prioritize pot size, drainage, soil wetness, compaction, root crowding clues, and watering mistakes.";
+      }
+      return "Balance the diagnosis across leaves, stems, pot, soil surface, and natural treatment.";
+    }
+
+    function buildPrompt() {
+      return `You are a careful plant health advisor. Analyze the uploaded photo of a potted plant.
+
+Focus on what is visually present only. Do not claim certainty where the image is ambiguous. If a condition cannot be confirmed visually, say it is a likely issue rather than a confirmed diagnosis.
+
+Main goal:
+- Identify likely problems in the plant or pot setup.
+- Explain what visible evidence supports each issue.
+- Recommend natural or low-toxicity remedies only.
+- Mention pot or soil problems if visible.
+
+${getFocusPrompt()}
+
+Return only valid JSON with this exact structure:
+{
+  "plant_name": "Common or likely plant name",
+  "overall_condition": "Healthy" | "Watch" | "Stressed",
+  "confidence": "Low" | "Medium" | "High",
+  "problem_summary": "2-3 sentence summary of what seems wrong and why",
+  "pot_assessment": "Short paragraph about pot size, drainage, soil condition, or visible setup issues",
+  "likely_issues": [
+    {
+      "name": "Issue name",
+      "severity": "low" | "medium" | "high",
+      "evidence": "What in the photo suggests this issue",
+      "natural_cure": "Practical natural cure using methods like pruning, airflow, neem oil, diluted soap spray, cinnamon, repotting, or watering correction",
+      "prevention": "How to prevent the issue from returning"
+    }
+  ],
+  "care_plan": [
+    {
+      "title": "Short action title",
+      "instruction": "Clear actionable step"
+    }
+  ],
+  "urgent_action": "The single most important next step for the owner",
+  "advisory_note": "Cautionary note about uncertainty, root inspection, isolation, or when to seek expert help"
+}
+
+Rules:
+- Use "Healthy", "Watch", or "Stressed" only for overall_condition.
+- Use "Low", "Medium", or "High" only for confidence.
+- Use "low", "medium", or "high" only for issue severity.
+- If the plant looks healthy, still return likely_issues as an empty array and give maintenance care_plan items.
+- Do not use chemical pesticides or synthetic fungicides in natural_cure.
+- Return JSON only.`;
+    }
+
+    function getHeaders(key) {
+      const headers = {
+        "Authorization": `Bearer ${key}`,
+        "Content-Type": "application/json",
+        "X-Title": "RootSense Plant Pot Advisory"
+      };
+
+      if (window.location.origin && window.location.origin !== "null") {
+        headers["HTTP-Referer"] = window.location.origin;
+      }
+
+      return headers;
+    }
+
+    function getMessageText(content) {
+      if (!content) return "";
+      if (typeof content === "string") return content;
+      if (Array.isArray(content)) {
+        return content.map(part => {
+          if (typeof part === "string") return part;
+          return part && part.text ? part.text : "";
+        }).join("");
+      }
+      return "";
+    }
+
+    function parseJsonResponse(text) {
+      const cleaned = text.replace(/```json|```/gi, "").trim();
+      try {
+        return JSON.parse(cleaned);
+      } catch (error) {
+        const start = cleaned.indexOf("{");
+        const end = cleaned.lastIndexOf("}");
+        if (start !== -1 && end !== -1 && end > start) {
+          return JSON.parse(cleaned.slice(start, end + 1));
+        }
+        throw new Error("The model returned an invalid JSON response.");
+      }
+    }
+
+    function normalizeData(data) {
+      const condition = ["Healthy", "Watch", "Stressed"].includes(data.overall_condition) ? data.overall_condition : "Watch";
+      const confidence = ["Low", "Medium", "High"].includes(data.confidence) ? data.confidence : "Medium";
+      const issues = Array.isArray(data.likely_issues) ? data.likely_issues : [];
+      const plan = Array.isArray(data.care_plan) ? data.care_plan : [];
+
+      return {
+        plant_name: data.plant_name || "Unknown plant",
+        overall_condition: condition,
+        confidence,
+        problem_summary: data.problem_summary || "The model did not return a usable plant summary.",
+        pot_assessment: data.pot_assessment || "No pot assessment returned.",
+        likely_issues: issues.map(issue => ({
+          name: issue.name || "Likely issue",
+          severity: ["low", "medium", "high"].includes(issue.severity) ? issue.severity : "medium",
+          evidence: issue.evidence || "No visible evidence described.",
+          natural_cure: issue.natural_cure || "No natural cure returned.",
+          prevention: issue.prevention || "No prevention guidance returned."
+        })),
+        care_plan: plan.map(step => ({
+          title: step.title || "Care step",
+          instruction: step.instruction || ""
+        })),
+        urgent_action: data.urgent_action || "Inspect the plant closely and stabilize watering.",
+        advisory_note: data.advisory_note || "Image-based diagnosis has limits. Check roots and leaf undersides directly if symptoms continue."
+      };
+    }
+
+    function renderResults(data) {
+      const badgeMap = {
+        Healthy: { label: "Healthy", className: "status-good" },
+        Watch: { label: "Needs watch", className: "status-watch" },
+        Stressed: { label: "Stressed", className: "status-poor" }
+      };
+
+      const badge = badgeMap[data.overall_condition] || badgeMap.Watch;
+
+      resultKicker.textContent = focusArea.value === "pot" ? "Pot-focused diagnosis" : focusArea.value === "leaf" ? "Leaf-focused diagnosis" : "Plant diagnosis";
+      plantName.textContent = data.plant_name;
+      problemSummary.textContent = data.problem_summary;
+      healthBadge.textContent = badge.label;
+      healthBadge.className = `status-badge ${badge.className}`;
+      overallCondition.textContent = data.overall_condition;
+      confidenceScore.textContent = data.confidence;
+      issueCount.textContent = String(data.likely_issues.length);
+      potAssessment.textContent = data.pot_assessment;
+      urgentAction.textContent = data.urgent_action;
+      advisoryNote.textContent = data.advisory_note;
+
+      issueList.innerHTML = data.likely_issues.length
+        ? data.likely_issues.map(issue => `
+            <div class="issue">
+              <div class="issue-head">
+                <strong>${escapeHtml(issue.name)}</strong>
+                <span class="severity ${escapeHtml(issue.severity)}">${escapeHtml(issue.severity)}</span>
+              </div>
+              <p><strong>Evidence:</strong> ${escapeHtml(issue.evidence)}</p>
+              <p><strong>Natural cure:</strong> ${escapeHtml(issue.natural_cure)}</p>
+              <p><strong>Prevention:</strong> ${escapeHtml(issue.prevention)}</p>
+            </div>
+          `).join("")
+        : `<div class="issue"><p>No major visible issue was identified. Continue routine care and monitor for changes over the next 7 to 10 days.</p></div>`;
+
+      carePlan.innerHTML = data.care_plan.length
+        ? data.care_plan.map(step => `
+            <div class="tip">
+              <strong>${escapeHtml(step.title)}</strong>
+              <span>${escapeHtml(step.instruction)}</span>
+            </div>
+          `).join("")
+        : `<div class="tip"><strong>Maintain routine</strong><span>Keep current care stable and monitor leaf color, soil moisture, and drainage.</span></div>`;
+
+      results.classList.add("show");
+      results.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    async function analyzePlant() {
+      const key = apiKey.value.trim();
+      if (!key) {
+        showError("Enter your OpenRouter API key first.");
+        return;
+      }
+
+      if (!currentDataUrl) {
+        showError("Upload a plant photo first.");
+        return;
+      }
+
+      hideError();
+      clearResults();
+      analyzeBtn.classList.add("loading");
+      analyzeBtn.disabled = true;
+
+      const route = ROUTES[modelRoute.value] || ROUTES.balanced;
+      const prompt = buildPrompt();
+
+      try {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: getHeaders(key),
+          body: JSON.stringify({
+            model: route.model,
+            temperature: 0.2,
+            max_tokens: 1800,
+            response_format: { type: "json_object" },
+            messages: [
+              {
+                role: "system",
+                content: "You are a mature plant diagnostician. Be conservative, practical, and image-grounded. Return valid JSON only."
+              },
+              {
+                role: "user",
+                content: [
+                  { type: "text", text: prompt },
+                  { type: "image_url", image_url: { url: currentDataUrl } }
+                ]
+              }
+            ]
+          })
+        });
+
+        if (!response.ok) {
+          const errorPayload = await response.json().catch(() => ({}));
+          throw new Error(errorPayload.error?.message || errorPayload.message || `OpenRouter request failed with ${response.status}`);
+        }
+
+        const payload = await response.json();
+        const rawText = getMessageText(payload.choices && payload.choices[0] && payload.choices[0].message && payload.choices[0].message.content);
+        const parsed = normalizeData(parseJsonResponse(rawText));
+        renderResults(parsed);
+      } catch (error) {
+        showError(error.message || "Plant analysis failed.");
+      } finally {
+        analyzeBtn.classList.remove("loading");
+        updateAnalyzeState();
+      }
+    }
+
+    function handleFile(file) {
+      if (!file || !file.type || !file.type.startsWith("image/")) {
+        showError("Upload a valid image file.");
+        return;
+      }
+
+      currentFile = file;
+      currentMimeType = file.type || "image/jpeg";
+      const reader = new FileReader();
+      reader.onload = event => {
+        currentDataUrl = event.target.result;
+        previewImg.src = currentDataUrl;
+        previewName.textContent = file.name;
+        previewMeta.textContent = `${currentMimeType} • ready for plant analysis`;
+        preview.classList.add("show");
+        uploadZone.style.display = "none";
+        hideError();
+        clearResults();
+        updateAnalyzeState();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    uploadZone.addEventListener("dragover", event => {
+      event.preventDefault();
+      uploadZone.classList.add("dragover");
+    });
+
+    uploadZone.addEventListener("dragleave", () => {
+      uploadZone.classList.remove("dragover");
+    });
+
+    uploadZone.addEventListener("drop", event => {
+      event.preventDefault();
+      uploadZone.classList.remove("dragover");
+      const file = event.dataTransfer.files[0];
+      if (file) handleFile(file);
+    });
+
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files[0];
+      if (file) handleFile(file);
+    });
+
+    removeBtn.addEventListener("click", resetImage);
+    resetBtn.addEventListener("click", clearResults);
+    saveKeyBtn.addEventListener("click", saveKey);
+    analyzeBtn.addEventListener("click", analyzePlant);
+    apiKey.addEventListener("input", updateAnalyzeState);
+    modelRoute.addEventListener("change", updateRouteBox);
+
+    loadSavedKey();
+    updateRouteBox();
+    updateAnalyzeState();
+  </script>
 </body>
 </html>
